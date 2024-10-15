@@ -1,0 +1,41 @@
+<script>
+  function submitLoginForm(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    fetch('/api/auth/perform-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    }).then(response => response.json())
+    .then(data => {
+      if (data.token) {
+        // Save token to localStorage or sessionStorage
+        localStorage.setItem('authToken', data.token);
+        console.log(localStorage.getItem('authToken'));
+
+        // Redirect to the profile or another secured page
+        window.location.href = '/';
+      } else {
+        alert('Login failed: ' + data.message);
+      }
+    }).catch(error => console.error('Error:', error));
+  }
+</script>
+
+
+<form onsubmit="submitLoginForm(event)">
+  <div>
+    <label for="email">Email:</label>
+    <input type="text" id="email" name="email" required>
+  </div>
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+  </div>
+  <button type="submit">Login</button>
+</form>

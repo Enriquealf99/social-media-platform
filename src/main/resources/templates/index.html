@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Platform</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        function checkLoginStatus() {
+            const token = localStorage.getItem('authToken');
+            const loginLink = document.getElementById('login-link');
+            const registerLink = document.getElementById('register-link');
+            const profileLink = document.getElementById('profile-link');
+            const logoutLink = document.getElementById('logout-link');
+
+            if (token) {
+                loginLink.style.display = 'none';
+                registerLink.style.display = 'none';
+                profileLink.style.display = 'block';
+                logoutLink.style.display = 'block';
+            } else {
+                loginLink.style.display = 'block';
+                registerLink.style.display = 'block';
+                profileLink.style.display = 'none';
+                logoutLink.style.display = 'none';
+            }
+        }
+
+        function openPostPage() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                 window.location.href = '/post';
+            }
+            else {
+                 console.log("didn't work");
+            }
+
+        }
+
+        function openProfile() {
+            const token = localStorage.getItem('authToken');
+
+            if (token) {
+                fetch('/api/profile/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/api/profile/profile';
+                    } else if (response.status === 401 || response.status === 403) {
+                        console.log('Token invalid or expired, redirecting to login...');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/api/auth/login';
+                    } else {
+                        console.error('Unexpected error:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                    window.location.href = '/api/auth/login';
+                });
+            } else {
+                window.location.href = '/api/auth/login';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken'); // Remove token from localStorage
+            window.location.href = '/api/auth/login'; // Redirect to login page
+        }
+
+        async function openPost(postId) {
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                }
+            });
+
+            if (response.ok) {
+                const post = await response.json();
+                const postDetailsSection = document.getElementById('post-details');
+                postDetailsSection.innerHTML = `
+                    <h3>${post.title}</h3>
+                    <p>${post.content}</p>
+                    <span>Posted by User ID: ${post.userid}</span>
+                `;
+            } else {
+                alert('Error fetching post details');
+            }
+        }
+
+        async function getAllPosts() {
+            const response = await fetch('/api/posts/all-posts', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                }
+            });
+
+            if (response.ok) {
+                const posts = await response.json();
+                const postSection = document.getElementById('post-list');
+                postSection.innerHTML = '';
+                posts.forEach(post => {
+                    postSection.innerHTML += `
+                        <div class="post">
+                            <h3><a href="#" onclick="openPost(${post.id})">${post.title}</a></h3>
+                            <p>${post.content.substring(0, 100)}...</p>
+                        </div>`;
+                });
+            }
+        }
+
+        window.onload = function() {
+            checkLoginStatus();
+            getAllPosts();
+        }
+    </script>
+</head>
+<body>
+
+<nav>
+    <div class="navbar">
+        <form class="search-box" th:action="@{/search}" method="GET">
+            <input type="text" placeholder="Search" name="query">
+            <button type="submit">Search</button>
+        </form>
+        <div class="nav-links">
+            <a th:href="@{/}" class="nav-link">Home</a>
+            <a href="#" class="nav-link" onclick="openPostPage()">Post</a>
+            <a id="profile-link" href="#" class="nav-link" onclick="openProfile()">Profile</a>
+            <a id="login-link" th:href="@{/api/auth/login}" class="nav-link">Login</a>
+            <a id="register-link" th:href="@{/api/auth/register}" class="nav-link">Register</a>
+            <a id="logout-link" href="#" class="nav-link" onclick="logout()">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="content">
+    <div class="post-section">
+        <h2>Posts</h2>
+        <div id="post-list"></div>
+
+        <h2>Post Details</h2>
+        <div id="post-details"></div>
+    </div>
+</div>
+
+</body>
+</html>

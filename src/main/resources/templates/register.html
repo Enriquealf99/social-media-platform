@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <title>Register</title>
+</head>
+<body>
+<h1>Register</h1>
+<form th:id="registerForm" th:action="@{/api/auth/register}" method="post">
+  <div>
+    <label for="firstname">firstname:</label>
+    <input type="text" id="firstname" name="firstname" th:required="required" />
+  </div>
+  <div>
+    <label for="lastname">lastname:</label>
+    <input type="text" id="lastname" name="lastname" th:required="required" />
+  </div>
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" th:required="required" />
+  </div>
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" th:required="required" th:minlength="6" />
+  </div>
+  <button type="button" onclick="register()">Register</button>
+</form>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+            var password = document.getElementById('password').value;
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                event.preventDefault();
+            }
+    });
+    function register() {
+        const formData = {
+            firstname: document.getElementById('firstname').value,
+            lastname: document.getElementById('lastname').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+
+        fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Registration successful!');
+                if (response.redirected) {
+                   window.location.href = response.url;  // Redirect manually on successful registration
+                }
+            } else {
+              alert('Registration failed!');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>User Profile</title>
+</head>
+<body>
+<h2>Profile</h2>
+<form id="profile-form">
+  <div>
+    <label for="firstname">First Name:</label>
+    <input type="text" id="firstname" name="firstname" th:value="${user.firstname}" required>
+  </div>
+  <div>
+    <label for="lastname">Last Name:</label>
+    <input type="text" id="lastname" name="lastname" th:value="${user.lastname}" required>
+  </div>
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" th:value="${user.email}" required>
+  </div>
+  <button type="submit">Update Profile</button>
+</form>
+
+<p id="success-message" th:if="${param.success}">Profile updated successfully!</p>
+
+<script>
+  document.getElementById('profile-form').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    // Collect form data
+    const formData = {
+      firstname: document.getElementById('firstname').value,
+      lastname: document.getElementById('lastname').value,
+      email: document.getElementById('email').value
+    };
+
+    // Get token from localStorage or sessionStorage
+    const token = localStorage.getItem('authToken'); // Or sessionStorage.getItem('authToken')
+
+    if (!token) {
+      alert('No authentication token found. Please login first.');
+      return;
+    }
+
+    try {
+      // Send the form data with the token in the header
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token // Attach the token here
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        document.getElementById('success-message').textContent = 'Profile updated successfully!';
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error during the profile update:', error);
+      alert('Error updating profile');
+    }
+  });
+</script>
+
+</body>
+</html>
